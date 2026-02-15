@@ -13,12 +13,13 @@ export function scorePair(pair) {
   const liq = num(pair.liquidity?.usd);
   const buys = num(pair.txns?.h1?.buys);
   const sells = num(pair.txns?.h1?.sells);
+  const tx = Math.min(120, buys + sells);
   const age = ageHours(pair.pairCreatedAt);
 
-  const momentum = Math.max(-20, Math.min(45, h1)) * 1.8 + Math.max(-40, Math.min(130, h24)) * 0.32;
-  const activity = Math.log10(v1h + 1) * 16 + Math.log10(v6h + 1) * 9 + (buys + sells) * 1.1;
-  const liqScore = liq >= 120_000 ? 20 : liq >= 40_000 ? 12 : liq >= 12_000 ? 4 : -18;
-  const fresh = age <= 6 ? 24 : age <= 24 ? 16 : age <= 72 ? 6 : -20;
+  const momentum = Math.max(-25, Math.min(55, h1)) * 1.1 + Math.max(-60, Math.min(140, h24)) * 0.22;
+  const activity = Math.log10(v1h + 1) * 10 + Math.log10(v6h + 1) * 6 + tx * 0.16;
+  const liqScore = liq >= 120_000 ? 16 : liq >= 40_000 ? 10 : liq >= 12_000 ? 4 : -10;
+  const fresh = age <= 6 ? 14 : age <= 24 ? 9 : age <= 72 ? 3 : -8;
 
   return Number((momentum + activity + liqScore + fresh).toFixed(2));
 }

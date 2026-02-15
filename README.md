@@ -13,8 +13,9 @@ Most repos stop at a single script. This project is structured as a reusable age
 
 ## Core capabilities (current)
 
-- Scan DexScreener using AI/Meme-focused queries
-- Filter for **newer pairs** and basic quality thresholds
+- Scan DexScreener using AI/Meme-focused sources (search + latest token profiles)
+- Filter for **newer pairs** and quality thresholds
+- Reject generic/non-AI names and collapse duplicate symbols
 - Rank tokens via a composite scoring model:
   - momentum (h1/h24)
   - activity (volume + txns)
