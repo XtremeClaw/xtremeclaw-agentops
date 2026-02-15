@@ -25,3 +25,9 @@ export async function fetchPairsByToken(tokenAddress) {
   const data = await getJson(`${BASE}/latest/dex/tokens/${encodeURIComponent(tokenAddress)}`);
   return data?.pairs || [];
 }
+
+export async function fetchPairByAddress(chainId, pairAddress) {
+  const data = await getJson(`${BASE}/latest/dex/pairs/${encodeURIComponent(chainId)}/${encodeURIComponent(pairAddress)}`);
+  if (!data) return null;
+  return data.pair || (data.pairs || [])[0] || null;
+}

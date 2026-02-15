@@ -2,10 +2,28 @@ import { CONFIG } from '../config.mjs';
 import { searchDexScreener, fetchLatestProfiles, fetchLatestBoosts, fetchPairsByToken } from '../providers/dexscreener.mjs';
 import { classifyNarrative, ageHours, isProbablyGeneric } from '../engines/narrative.mjs';
 import { scorePair, num } from '../engines/scoring.mjs';
+import { evaluateRisk } from '../engines/risk.mjs';
+import { confidenceTier, positionSizing } from '../engines/confidence.mjs';
+
+function buildConfig(custom = {}) {
+  const cleanCustom = Object.fromEntries(Object.entries(custom).filter(([, v]) => v !== undefined && v !== null));
+  const mode = cleanCustom.mode || CONFIG.mode || 'balanced';
+  const modeCfg = CONFIG.modes?.[mode] || CONFIG.modes.balanced;
+  const merged = { ...CONFIG, ...modeCfg, ...cleanCustom, mode };
+  if (!merged.chainAllowlist) merged.chainAllowlist = [];
+  return merged;
+}
+
+function chainAllowed(pair, cfg) {
+  if (!cfg.chainAllowlist.length) return true;
+  return cfg.chainAllowlist.includes(String(pair.chainId || '').toLowerCase());
+}
 
 function qualityPass(pair, cfg) {
   const age = ageHours(pair.pairCreatedAt);
   if (age > cfg.maxAgeHours) return false;
+  if (!chainAllowed(pair, cfg)) return false;
+
   if (num(pair.liquidity?.usd) < cfg.minLiquidityUsd) return false;
   if (num(pair.volume?.h1) < cfg.minVolume1h) return false;
 
@@ -20,21 +38,22 @@ function qualityPass(pair, cfg) {
   return true;
 }
 
-function safetyTag(pair) {
-  const liq = num(pair.liquidity?.usd);
-  const vol = num(pair.volume?.h1);
-  const h1 = num(pair.priceChange?.h1);
-
-  if (liq >= 100000 && vol >= 10000 && h1 >= 0) return 'Safer';
-  if (liq >= 25000 && vol >= 3000 && h1 >= -10) return 'Moderate';
-  return 'Risky';
-}
-
 function toItem(pair, narrative, score) {
+  const risk = evaluateRisk(pair);
+  const meta = confidenceTier({
+    score,
+    riskScore: risk.riskScore,
+    h1: num(pair.priceChange?.h1),
+    h24: num(pair.priceChange?.h24),
+    liquidity: num(pair.liquidity?.usd)
+  });
+
   return {
     narrative,
     symbol: pair.baseToken.symbol,
     name: pair.baseToken.name,
+    tokenAddress: pair.baseToken.address,
+    pairAddress: pair.pairAddress,
     chain: pair.chainId,
     dex: pair.dexId,
     url: pair.url,
@@ -43,8 +62,14 @@ function toItem(pair, narrative, score) {
     h24: num(pair.priceChange?.h24),
     vol1h: num(pair.volume?.h1),
     liquidity: num(pair.liquidity?.usd),
+    priceUsd: num(pair.priceUsd),
     score,
-    safety: safetyTag(pair)
+    riskScore: risk.riskScore,
+    riskReasons: risk.riskReasons,
+    safety: risk.safety,
+    confidence: meta.tier,
+    composite: meta.composite,
+    positionSize: positionSizing(meta.tier)
   };
 }
 
@@ -57,12 +82,12 @@ async function fromSearch(cfg, bucket) {
 
       const score = scorePair(p);
       if (score < cfg.minScore) continue;
-      const narrative = classifyNarrative(p, '');
+      const narrative = classifyNarrative(p, q.key);
       if (!narrative) continue;
 
       const item = toItem(p, narrative, score);
       const prev = bucket.get(p.pairAddress);
-      if (!prev || item.score > prev.score) bucket.set(p.pairAddress, item);
+      if (!prev || item.composite > prev.composite) bucket.set(p.pairAddress, item);
     }
   }
 }
@@ -100,33 +125,34 @@ async function fromFreshProfiles(cfg, bucket) {
 
       const item = toItem(pair, narrative, score);
       const prev = bucket.get(pair.pairAddress);
-      if (!prev || item.score > prev.score) bucket.set(pair.pairAddress, item);
+      if (!prev || item.composite > prev.composite) bucket.set(pair.pairAddress, item);
     }
   }
 }
 
 export async function runScout(custom = {}) {
-  const cfg = { ...CONFIG, ...custom };
+  const cfg = buildConfig(custom);
   const dedupByPair = new Map();
 
   await fromSearch(cfg, dedupByPair);
   await fromFreshProfiles(cfg, dedupByPair);
 
-  // avoid spam by same symbol on same chain
   const dedupBySymbol = new Map();
   for (const item of dedupByPair.values()) {
     const key = `${item.chain}:${String(item.symbol).toLowerCase()}`;
     const prev = dedupBySymbol.get(key);
-    if (!prev || item.score > prev.score) dedupBySymbol.set(key, item);
+    if (!prev || item.composite > prev.composite) dedupBySymbol.set(key, item);
   }
 
   const picks = [...dedupBySymbol.values()]
-    .sort((a, b) => b.score - a.score)
+    .sort((a, b) => b.composite - a.composite)
     .slice(0, cfg.maxPicks);
 
   return {
     generatedAt: new Date().toISOString(),
+    mode: cfg.mode,
     filters: {
+      chainAllowlist: cfg.chainAllowlist,
       maxAgeHours: cfg.maxAgeHours,
       minLiquidityUsd: cfg.minLiquidityUsd,
       minVolume1h: cfg.minVolume1h,

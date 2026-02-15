@@ -1,60 +1,69 @@
 # XtremeClaw AgentOps
 
-Production-style AI/Meme market scouting toolkit for OpenClaw agents and human operators.
+Production-ready AI/Meme scouting toolkit for OpenClaw agents and human traders.
 
-XtremeClaw AgentOps helps you detect **newer tokens with momentum** while applying minimum quality and safety filters before adding them to a watchlist.
+Goal: help filter **newly deployed tokens** into a smaller list with better momentum/risk quality before manual buy decisions.
 
----
+## What’s upgraded (v0.3)
 
-## What this project does
+- Multi-source discovery (search + latest profiles + boosts)
+- Mode-based filtering: `strict`, `balanced`, `early`
+- Risk engine with `riskScore` + `riskReasons[]`
+- Confidence engine: `A / B / C / Avoid`
+- Position sizing guidance per confidence tier
+- Snapshot storage for tracking
+- Backtest command for score validation
+- Webhook alert mode for top A/B candidates
 
-- Scans DexScreener with AI/Meme-focused discovery flow
-- Prioritizes **recent pairs** (fresh deployments)
-- Filters low-quality candidates (liquidity, volume, negative momentum patterns)
-- Scores candidates using a transparent composite model
-- Adds a practical **safety tag** (`Safer`, `Moderate`, `Risky`)
-- Exports machine-readable JSON and markdown reports
+## Core commands
 
----
+```bash
+npm run doctor
+npm run scan
+npm run report
+npm run snapshot
+npm run backtest
+npm run alert
+```
 
-## Key features
+### CLI flags
 
-### 1) Fresh token discovery
-Data is gathered from:
-- DexScreener search API
-- DexScreener latest token profiles
-- DexScreener token boosts
-- Pair resolution per token (`/latest/dex/tokens/{tokenAddress}`)
+```bash
+node src/index.mjs scan --mode strict --chains base,solana --max-picks 15
+node src/index.mjs report --mode balanced
+node src/index.mjs snapshot --mode early
+node src/index.mjs backtest
+node src/index.mjs alert --alert-webhook https://your-webhook-url
+```
 
-### 2) Quality and risk gates
-Default gates (tunable in `src/config.mjs`):
-- `maxAgeHours: 96`
-- `minLiquidityUsd: 10000`
-- `minVolume1h: 1000`
-- `minScore: 60`
+Supported overrides:
+- `--mode strict|balanced|early`
+- `--chains base,solana,...`
+- `--max-picks 25`
+- `--min-liq 15000`
+- `--min-vol1h 1200`
+- `--max-age 72`
+- `--min-score 80`
 
-Additional guards:
-- remove generic/noisy symbols
-- reject collapsing momentum patterns
-- reject weak buy/sell pressure profiles
-- deduplicate by pair and symbol/chain
+## Output schema (scan)
 
-### 3) Scoring model
-Composite score uses:
-- short-term momentum (`h1`, `h24`)
-- trading activity (`volume`, `txns`)
-- liquidity quality
-- freshness boost
-
-### 4) Safety tag
 Each pick includes:
-- `Safer`
-- `Moderate`
-- `Risky`
+- `symbol`, `name`, `narrative`
+- `chain`, `dex`, `url`
+- `pairAddress`, `tokenAddress`
+- `ageHours`, `h1`, `h24`, `vol1h`, `liquidity`, `priceUsd`
+- `score`
+- `riskScore`, `riskReasons[]`, `safety`
+- `confidence`, `composite`, `positionSize`
 
-This is a signal aid, not a guarantee.
+## Safety model (practical, no overclaim)
 
----
+The toolkit is designed for **decision support**:
+- Filters weak liquidity/volume and obvious downtrend pressure
+- Adds transparent risk reasons
+- Gives confidence tier + sizing hint
+
+It does **not** guarantee safety. Always do final manual checks.
 
 ## Project structure
 
@@ -67,69 +76,23 @@ xtremeclaw-agentops/
 │   │   └── dexscreener.mjs
 │   ├── engines/
 │   │   ├── narrative.mjs
-│   │   └── scoring.mjs
+│   │   ├── scoring.mjs
+│   │   ├── risk.mjs
+│   │   └── confidence.mjs
 │   └── pipelines/
-│       └── scout.mjs
+│       ├── scout.mjs
+│       └── backtest.mjs
+├── data/
+│   └── snapshots/
+├── reports/
 ├── docs/
-│   ├── ARCHITECTURE.md
-│   ├── RUNBOOK.md
-│   └── ROADMAP.md
-├── skills/
-│   └── openclaw-agentops/
-│       └── SKILL.md
-└── reports/
+└── skills/
 ```
-
----
-
-## Quick start
-
-```bash
-npm run doctor
-npm run scan
-npm run report
-```
-
-- `scan` prints JSON to stdout
-- `report` saves markdown snapshot into `reports/`
-
----
-
-## Output format
-
-`npm run scan` returns:
-- `generatedAt`
-- `filters`
-- `picks[]` with:
-  - `symbol`, `name`, `narrative`
-  - `chain`, `dex`, `url`
-  - `ageHours`
-  - `h1`, `h24`
-  - `vol1h`, `liquidity`
-  - `score`
-  - `safety`
-
----
 
 ## OpenClaw integration
 
-This repo includes a local skill profile for agent sessions:
-
-- `skills/openclaw-agentops/SKILL.md`
-
-Use it to standardize operation flow when this toolkit is executed by OpenClaw agents.
-
----
-
-## Professional usage notes
-
-- Treat output as **decision support**, not auto-buy logic.
-- Always run manual contract checks before entering a position.
-- Prefer staged entries and strict risk limits.
-- Keep threshold tuning versioned in Git (auditability).
-
----
+Use `skills/openclaw-agentops/SKILL.md` for standardized run flow inside OpenClaw sessions.
 
 ## Disclaimer
 
-Not financial advice. Crypto assets are high risk.
+Not financial advice. Crypto tokens are high-risk assets.

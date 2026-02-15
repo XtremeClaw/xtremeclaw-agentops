@@ -1,12 +1,15 @@
 {
   "name": "xtremeclaw-agentops",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "Professional OpenClaw AI agent operations kit for AI/Meme narrative and momentum scouting",
   "scripts": {
-    "scan": "node src/index.mjs",
-    "report": "node src/index.mjs --report",
-    "doctor": "node -e \"console.log('Node', process.version); console.log('Runtime OK')\""
+    "scan": "node src/index.mjs scan",
+    "report": "node src/index.mjs report",
+    "snapshot": "node src/index.mjs snapshot",
+    "backtest": "node src/index.mjs backtest",
+    "alert": "node src/index.mjs alert",
+    "doctor": "node src/index.mjs doctor"
   }
 }

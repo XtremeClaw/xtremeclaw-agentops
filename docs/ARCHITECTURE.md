@@ -3,23 +3,21 @@
 ## Layers
 
 1. **Providers**
-   - External data source integrations
-   - Current: DexScreener search API
+   - DexScreener adapters (`search`, `profiles`, `boosts`, `pairs`)
 
 2. **Engines**
-   - Deterministic logic modules
-   - Narrative classifier
-   - Score model
+   - `narrative`: AI/Meme classification and generic-token rejection
+   - `scoring`: momentum + activity + liquidity + freshness
+   - `risk`: risk scoring + reason generation
+   - `confidence`: conviction tier + position sizing guidance
 
 3. **Pipelines**
-   - Orchestrate provider + engines
-   - Deduplicate and rank picks
+   - `scout`: discovery → filtering → scoring → risk/confidence
+   - `backtest`: snapshot replay against latest pair prices
 
-4. **Entry points**
-   - CLI (`src/index.mjs`)
-   - JSON/stdout output
-   - Markdown report output
+4. **Entry point**
+   - `src/index.mjs` command router (`scan`, `report`, `snapshot`, `backtest`, `alert`, `doctor`)
 
 ## Data flow
 
-Query -> Fetch pairs -> Quality filters -> Score -> Rank -> Output
+Sources -> Normalize -> Quality gates -> Score -> Risk -> Confidence -> Output

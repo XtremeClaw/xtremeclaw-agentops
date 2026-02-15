@@ -1,6 +1,6 @@
 ---
 name: openclaw-agentops
-description: Operate the XtremeClaw AgentOps repository to scan AI/Meme token momentum, generate ranked picks, and produce daily reports.
+description: Operate XtremeClaw AgentOps for AI/Meme token discovery, risk/confidence filtering, reporting, snapshot tracking, and webhook alerts.
 ---
 
 # OpenClaw AgentOps Skill
@@ -8,16 +8,29 @@ description: Operate the XtremeClaw AgentOps repository to scan AI/Meme token mo
 ## Use this when
 - User asks for AI/Meme token scouting
 - User asks for fresh token momentum reports
-- User asks for ranked watchlist generation from DexScreener
+- User asks for watchlist candidates with risk/confidence labels
+- User asks for signal tracking and performance review
 
 ## Commands
 
 ```bash
 npm run scan
 npm run report
+npm run snapshot
+npm run backtest
+npm run alert
+```
+
+## Mode examples
+
+```bash
+node src/index.mjs scan --mode strict --chains base
+node src/index.mjs scan --mode balanced --chains base,solana
+node src/index.mjs scan --mode early --min-liq 3000 --min-vol1h 250
 ```
 
 ## Operational notes
-- Tune thresholds in `src/config.mjs`
-- Prefer report mode for audit trails (`reports/*.md`)
-- Keep manual risk verification before publishing signals
+- Default mode is `strict` for safer filtering
+- Use `snapshot` + `backtest` to validate signal quality over time
+- Alert only publishes A/B confidence non-risky picks
+- Always do manual contract checks before execution
