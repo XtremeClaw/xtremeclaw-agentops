@@ -11,9 +11,23 @@ function qualityPass(pair, cfg) {
 
   const h1 = num(pair.priceChange?.h1);
   const h24 = num(pair.priceChange?.h24);
-  if (h1 < -70 && h24 < -90) return false;
+  if (h1 < -35 || h24 < -70) return false;
+
+  const buys = num(pair.txns?.h1?.buys);
+  const sells = num(pair.txns?.h1?.sells);
+  if (buys + sells > 0 && buys < sells * 0.6) return false;
 
   return true;
+}
+
+function safetyTag(pair) {
+  const liq = num(pair.liquidity?.usd);
+  const vol = num(pair.volume?.h1);
+  const h1 = num(pair.priceChange?.h1);
+
+  if (liq >= 100000 && vol >= 10000 && h1 >= 0) return 'Safer';
+  if (liq >= 25000 && vol >= 3000 && h1 >= -10) return 'Moderate';
+  return 'Risky';
 }
 
 function toItem(pair, narrative, score) {
@@ -29,7 +43,8 @@ function toItem(pair, narrative, score) {
     h24: num(pair.priceChange?.h24),
     vol1h: num(pair.volume?.h1),
     liquidity: num(pair.liquidity?.usd),
-    score
+    score,
+    safety: safetyTag(pair)
   };
 }
 

@@ -5,9 +5,9 @@ export const CONFIG = {
     { key: 'meme coin ai', label: 'Meme AI' }
   ],
   maxAgeHours: 96,
-  minLiquidityUsd: 3000,
-  minVolume1h: 20,
-  minScore: 12,
+  minLiquidityUsd: 10000,
+  minVolume1h: 1000,
+  minScore: 60,
   maxPicks: 20,
   maxProfiles: 35,
   narrativeKeywords: {
