@@ -1,11 +1,12 @@
 {
-  "name": "xtremeclaw-agent",
-  "version": "0.1.0",
+  "name": "xtremeclaw-agentops",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "AI/Meme narrative scout agent for DexScreener momentum discovery",
+  "description": "Professional OpenClaw AI agent operations kit for AI/Meme narrative and momentum scouting",
   "scripts": {
-    "scan": "node src/scout.mjs",
-    "report": "node src/scout.mjs --report"
+    "scan": "node src/index.mjs",
+    "report": "node src/index.mjs --report",
+    "doctor": "node -e \"console.log('Node', process.version); console.log('Runtime OK')\""
   }
 }

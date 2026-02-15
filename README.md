@@ -1,39 +1,76 @@
-# xtremeclaw-agentops
+# XtremeClaw AgentOps
 
-# XtremeClaw Agent (AI/Meme Scout)
+Professional OpenClaw-oriented AI agent toolkit focused on **AI/Meme narrative intelligence** and **early momentum discovery**.
 
-Agent utility for scanning **new AI/Meme tokens** with momentum potential from DexScreener.
+## Why this project exists
 
-## What it does
+Most repos stop at a single script. This project is structured as a reusable agent-ops foundation:
 
-- Searches narratives: `ai agent`, `ai meme`, `meme ai`
-- Filters to newer pairs only (<= 96h)
-- Scores by momentum, activity, liquidity, and freshness
-- Outputs ranked picks in JSON
-- Optional markdown report generation
+- Modular architecture (providers / engines / pipelines)
+- Repeatable scanning with deterministic filters
+- Report generation for publishing and review
+- Ready to extend for alerts, memory, and autonomous execution
+
+## Core capabilities (current)
+
+- Scan DexScreener using AI/Meme-focused queries
+- Filter for **newer pairs** and basic quality thresholds
+- Rank tokens via a composite scoring model:
+  - momentum (h1/h24)
+  - activity (volume + txns)
+  - liquidity quality
+  - freshness boost
+- Output machine-readable JSON
+- Generate markdown reports in `reports/`
+
+## Project structure
+
+```text
+xtremeclaw-agentops/
+├── src/
+│   ├── config.mjs
+│   ├── index.mjs
+│   ├── providers/
+│   │   └── dexscreener.mjs
+│   ├── engines/
+│   │   ├── narrative.mjs
+│   │   └── scoring.mjs
+│   └── pipelines/
+│       └── scout.mjs
+├── docs/
+│   ├── ARCHITECTURE.md
+│   ├── RUNBOOK.md
+│   └── ROADMAP.md
+├── skills/
+│   └── openclaw-agentops/
+│       └── SKILL.md
+└── reports/
+```
 
 ## Quick start
 
 ```bash
-cd xtremeclaw-agent
 npm run scan
-```
-
-Generate markdown report:
-
-```bash
 npm run report
 ```
 
-Reports are saved to `reports/`.
+## Example output
 
-## Intended use
+`npm run scan` prints JSON with:
 
-- Daily watchlist generation
-- Inputs for Telegram alerts
-- Inputs for X/Twitter market commentary
+- `generatedAt`
+- `filters`
+- `picks[]` (symbol, narrative, age, momentum, liquidity, score, URL)
 
-## Notes
+## OpenClaw compatibility
 
-- This is a signal assistant, not financial advice.
-- You should still manually validate contract risk and liquidity traps.
+A local skill brief is included:
+
+- `skills/openclaw-agentops/SKILL.md`
+
+Use it as operational guidance when this repo is controlled by an OpenClaw agent session.
+
+## Security note
+
+This project provides signal assistance, **not financial advice**.
+Always verify contract safety manually before taking action.
